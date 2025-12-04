@@ -1,0 +1,404 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Beef Monitoring - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .auth-card-left {
+            /* ...existing code... */
+            align-items: center;
+        }
+        .side-img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 16px;
+            margin-top: 18px;
+            box-shadow: 0 2px 16px #0006;
+            display: block;
+        }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .auth-card {
+            display: flex;
+            flex-direction: row;
+            background: rgba(30, 25, 40, 0.97);
+            border-radius: 22px;
+            box-shadow: 0 8px 32px #000a;
+            overflow: hidden;
+            min-width: 720px;
+            max-width: 900px;
+            width: 100%;
+            min-height: 420px;
+        }
+        .auth-card-left {
+            background: linear-gradient(120deg, #3a2567 60%, #1a1333 100%);
+            color: #fff;
+            width: 44%;
+            min-width: 260px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 38px 28px 28px 38px;
+            position: relative;
+        }
+        .auth-card-left .logo {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 32px;
+            writing-mode: unset;
+            text-orientation: unset;
+            transform: none;
+            white-space: normal;
+            text-align: left;
+            display: block;
+            font-size: 2.1em;
+            font-weight: 800;
+            margin-bottom: 32px;
+            margin-top: 10px;
+            letter-spacing: 1.5px;
+        }
+        .auth-card-left .side-img {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 18px;
+            box-shadow: 0 2px 16px #0006;
+        }
+        .auth-card-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 44px 38px 38px 38px;
+        }
+        .auth-title {
+            color: #fff;
+            font-size: 2.3em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .auth-subtext {
+            color: #bdbdbd;
+            font-size: 1.08em;
+            margin-bottom: 32px;
+        }
+        .auth-input {
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            background: rgba(255,255,255,0.10);
+            color: #fff;
+            outline: none;
+            box-shadow: 0 2px 8px #0002;
+        }
+        .auth-input::placeholder {
+            color: #bdbdbd;
+            opacity: 1;
+        }
+        .auth-btn {
+            background: #8e24aa;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 16px 0;
+            font-size: 1.18em;
+            font-weight: 700;
+            margin-top: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 12px #0003;
+            transition: background 0.2s;
+        }
+        .auth-btn:active {
+            background: #6d1b7b;
+        }
+        .switch-link {
+            text-align: left;
+            margin-top: 18px;
+            font-size: 1.05em;
+            color: #eee;
+        }
+        .switch-link a {
+            color: #b39ddb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .switch-link a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+        @media (max-width: 900px) {
+            .auth-card { flex-direction: column; min-width: 320px; max-width: 98vw; }
+            .auth-card-left { width: 100%; min-width: 0; padding: 28px 18px 18px 18px; align-items: center; }
+            .auth-card-right { padding: 28px 18px 18px 18px; }
+        }
+            .auth-box {
+                background: #fff;
+                border-radius: 22px;
+                box-shadow: 0 4px 32px #0008;
+                padding: 44px 38px 32px 38px;
+                min-width: 340px;
+                max-width: 420px;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+        .auth-title {
+          color: #fff;
+          font-size: 2.2em;
+          font-weight: 700;
+          letter-spacing: 1px;
+          margin-bottom: 28px;
+          text-align: center;
+        }
+            .auth-title {
+                color: #fff;
+                letter-spacing: 2px;
+                font-size: 2em;
+                margin-bottom: 24px;
+            }
+        .tab-group {
+            display: flex;
+            margin-bottom: 18px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            background: #e3e9f7;
+            color: #1a237e;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(90deg, #2196f3 60%, #1565c0 100%);
+            color: #fff;
+        }
+        .auth-input {
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            border: 1.5px solid #bdbdbd;
+            border-radius: 7px;
+            font-size: 0.98em;
+            outline: none;
+            transition: border 0.2s;
+        }
+            .auth-input {
+                margin-bottom: 18px;
+                padding: 14px 16px;
+                border: none;
+                border-radius: 6px;
+                font-size: 1.1em;
+                background: rgba(255,255,255,0.08);
+                color: #fff;
+                outline: none;
+                box-shadow: 0 2px 8px #0002;
+            }
+        .auth-input:focus {
+            border: 1.5px solid #2196f3;
+        }
+        .auth-link {
+            color: #1976d2;
+            text-decoration: none;
+            font-size: 0.97em;
+            margin-bottom: 10px;
+        }
+        .auth-link:hover { text-decoration: underline; }
+        .auth-btn {
+            background: linear-gradient(90deg, #2196f3 60%, #1565c0 100%);
+            color: #fff;
+            border: none;
+            .auth-btn {
+                background: #8e24aa;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                padding: 16px 0;
+                font-size: 1.25em;
+                font-weight: 700;
+                margin-top: 12px;
+                cursor: pointer;
+                box-shadow: 0 2px 12px #0003;
+                transition: background 0.2s;
+            }
+            border-radius: 7px;
+            padding: 8px 0;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 8px;
+            cursor: pointer;
+        .dark-card {
+            background: rgba(20, 20, 40, 0.92);
+            color: #fff;
+            box-shadow: 0 4px 32px #0008;
+        }
+        .auth-title {
+            color: #fff;
+            letter-spacing: 2px;
+        }
+        }
+        @media (max-width: 900px) {
+            .auth-container { flex-direction: column; gap: 18px; }
+            .auth-box { min-width: 180px; max-width: 98vw; }
+        }
+            @media (max-width: 900px) {
+                .auth-container { flex-direction: column; gap: 18px; }
+                .auth-box { min-width: 220px; max-width: 98vw; padding: 24px 8vw 18px 8vw; }
+            }
+        @media (max-width: 600px) {
+            .auth-title { font-size: 1em; }
+            .auth-box { padding: 10px 4vw 12px 4vw; }
+            .auth-input { font-size: 0.95em; }
+        }
+            @media (max-width: 600px) {
+                .auth-title { font-size: 1.2em; }
+                .auth-box { padding: 10px 2vw 12px 2vw; }
+                .auth-input { font-size: 1em; padding: 10px 8px; }
+            }
+    </style>
+</head>
+<body>
+        <div class="auth-container" style="z-index:2;position:relative;">
+            <div class="auth-card">
+                <div class="auth-card-left">
+                                                                    <div class="logo">
+                            <div style="font-weight:800;">Sistem Monitoring Kesegaran Daging Sapi</div>
+                            <div style="font-size:0.95em;color:#dcd6ff;margin-top:12px;">Berbasis IoT dan AI</div>
+                        </div>
+                      <img class="side-img" src="/static/img/cow_farm_cartoon.png" alt="side" onerror="this.style.display='none'" />
+                </div>
+                <div class="auth-card-right">
+                    <div id="loginBox">
+                        <div class="auth-title">Login</div>
+                        <div class="auth-subtext">Welcome back! Please login to your account.</div>
+                        <input class="auth-input" type="text" id="loginUsername" placeholder="Username">
+                        <input class="auth-input" type="password" id="loginPassword" placeholder="Password">
+                        <button class="auth-btn" id="loginBtn">Login</button>
+                        <div class="switch-link">Not a member? <a href="#" id="switchToRegister">Sign Up</a></div>
+                    </div>
+                    <div id="registerBox" style="display:none;">
+                        <div class="auth-title">Create an account</div>
+                        <div class="auth-subtext">Already have an account? <a href="#" id="switchToLogin" style="color:#b39ddb;">Log in</a></div>
+                        <input class="auth-input" type="text" id="registerUsername" placeholder="Username">
+                        <input class="auth-input" type="email" id="registerEmail" placeholder="Email">
+                        <input class="auth-input" type="password" id="registerPassword" placeholder="Password">
+                        <input class="auth-input" type="password" id="registerPassword2" placeholder="Repeat Password">
+                        <button class="auth-btn" id="registerBtn">Create account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <script>
+    // Tab & Switch logic (safe for missing tab buttons)
+    const loginBox = document.getElementById('loginBox');
+    const registerBox = document.getElementById('registerBox');
+    const switchToRegister = document.getElementById('switchToRegister');
+    const switchToLogin = document.getElementById('switchToLogin');
+    if (switchToRegister) switchToRegister.onclick = (e) => { e.preventDefault(); loginBox.style.display = 'none'; registerBox.style.display = ''; };
+    if (switchToLogin) switchToLogin.onclick = (e) => { e.preventDefault(); loginBox.style.display = ''; registerBox.style.display = 'none'; };
+
+    // Show/hide password toggle (optional, for UX)
+    // ...existing code...
+
+    // AJAX Login
+    document.getElementById('loginBtn').onclick = async function() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        this.disabled = true; this.textContent = 'Loading...';
+        let err = '';
+        try {
+            const resp = await fetch('/api/ajax-login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                window.location.href = '/dashboard/';
+                return;
+            } else {
+                err = data.message || 'Login gagal';
+            }
+        } catch(e) { err = 'Gagal koneksi ke server'; }
+        this.disabled = false; this.textContent = 'Login';
+        showError('login', err);
+    };
+
+    // AJAX Register
+    document.getElementById('registerBtn').onclick = async function() {
+        const usernameEl = document.getElementById('registerUsername');
+        const emailEl = document.getElementById('registerEmail');
+        const passEl = document.getElementById('registerPassword');
+        const pass2El = document.getElementById('registerPassword2');
+        const username = usernameEl ? usernameEl.value.trim() : '';
+        const email = emailEl ? emailEl.value.trim() : '';
+        const password = passEl ? passEl.value : '';
+        const password2 = pass2El ? pass2El.value : '';
+        this.disabled = true; this.textContent = 'Loading...';
+        let err = '';
+        if (!username) err = 'Username wajib diisi';
+        else if (!email) err = 'Email wajib diisi';
+        else if (!password) err = 'Password wajib diisi';
+        else if (!password2) err = 'Ulangi password wajib diisi';
+        else if (password !== password2) err = 'Password tidak sama';
+        if (err) { this.disabled = false; this.textContent = 'Daftar'; showError('register', err); return; }
+        try {
+            const resp = await fetch('/api/ajax-register/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                window.location.href = '/dashboard/';
+                return;
+            } else {
+                err = data.message || 'Registrasi gagal';
+            }
+        } catch(e) { err = 'Gagal koneksi ke server'; }
+        this.disabled = false; this.textContent = 'Daftar';
+        showError('register', err);
+    };
+
+    // Error display helper
+    function showError(type, msg) {
+        let el = document.getElementById(type+'Error');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = type+'Error';
+            el.style.color = '#c0392b';
+            el.style.margin = '8px 0 0 0';
+            el.style.fontSize = '0.98em';
+            if (type === 'login') loginBox.insertBefore(el, document.getElementById('loginBtn'));
+            else registerBox.insertBefore(el, document.getElementById('registerBtn'));
+        }
+        el.textContent = msg;
+    }
+    </script>
+</body>
+</html>

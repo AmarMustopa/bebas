@@ -1,0 +1,103 @@
+{% extends 'monitoring/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="status-card">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Settings</h1>
+        <div class="text-sm text-gray-500">Last updated: {{ settings.last_updated|default:"Never" }}</div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %} rounded-lg">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- InfluxDB Settings -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4">InfluxDB Configuration</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">InfluxDB URL</label>
+                    <input type="url" name="influx_url" value="{{ influx.url }}" required
+                        placeholder="http://localhost:8086"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">InfluxDB Token</label>
+                    <input type="password" name="influx_token" value="{{ influx.token }}"
+                        placeholder="Leave blank to keep current token"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Organization</label>
+                    <input type="text" name="influx_org" value="{{ influx.org }}" required
+                        placeholder="my-org"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Bucket</label>
+                    <input type="text" name="influx_bucket" value="{{ influx.bucket }}" required
+                        placeholder="sensor_data"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Settings -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4">Dashboard Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Auto-refresh Interval (seconds)</label>
+                    <input type="number" name="refresh_interval" value="{{ default_refresh }}" required min="5"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                Save Settings
+            </button>
+        </div>
+    </form>
+
+    <!-- Test Connection -->
+    <div class="mt-8">
+        <button onclick="testConnection()" class="text-blue-600 hover:text-blue-800">
+            <i class="fas fa-sync-alt mr-2"></i>Test InfluxDB Connection
+        </button>
+        <div id="connectionStatus" class="mt-2"></div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    const status = document.getElementById('connectionStatus');
+    status.innerHTML = '<div class="text-blue-600"><i class="fas fa-spinner fa-spin mr-2"></i>Testing connection...</div>';
+
+    fetch('/api/test_influx/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                status.innerHTML = '<div class="text-green-600"><i class="fas fa-check-circle mr-2"></i>Connection successful</div>';
+            } else {
+                status.innerHTML = `<div class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            status.innerHTML = '<div class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Connection failed</div>';
+        });
+}
+</script>
+{% endblock %}

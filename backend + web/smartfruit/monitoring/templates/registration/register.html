@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - Sistem Monitoring Kesegaran Daging Sapi</title>
+    <link href="{% static 'css/auth.css' %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="flash-message {% if message.tags %}{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="form-box">
+            <div class="brand">
+                <div class="brand-logo">SB</div>
+                <h1>Welcome to Dashboard Monitoring</h1>
+                <p class="brand-sub">Smart Beef Monitoring</p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Nama Pengguna</label>
+                    <input type="text" name="username" id="username" class="form-control" required>
+                    {% if form.username.errors %}
+                    <div class="error-message">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" class="form-control" required>
+                    {% if form.email.errors %}
+                    <div class="error-message">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="password1">Kata Sandi</label>
+                    <input type="password" name="password1" id="password1" class="form-control" required>
+                    {% if form.password1.errors %}
+                    <div class="error-message">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="password2">Konfirmasi Kata Sandi</label>
+                    <input type="password" name="password2" id="password2" class="form-control" required>
+                    {% if form.password2.errors %}
+                    <div class="error-message">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                <div class="error-message">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                <button type="submit" class="btn">Daftar</button>
+            </form>
+            <a href="{% url 'login' %}" class="auth-link">Sudah punya akun? Masuk di sini</a>
+        </div>
+    </div>
+</body>
+</html>

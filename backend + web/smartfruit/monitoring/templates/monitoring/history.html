@@ -1,0 +1,336 @@
+
+{% extends 'monitoring/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="status-card">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Sensor History</h1>
+        <div class="flex items-center space-x-4">
+            <form method="get" class="flex items-center space-x-4">
+                <input type="date" name="date" value="{{ date_filter|default:'' }}"
+                    class="rounded-md border-gray-300 shadow-sm">
+                <select name="status" class="rounded-md border-gray-300 shadow-sm">
+                    <option value="">All Status</option>
+                    <option value="LAYAK" {% if status_filter == 'LAYAK' %}selected{% endif %}>LAYAK</option>
+                    <option value="TIDAK LAYAK" {% if status_filter == 'TIDAK LAYAK' %}selected{% endif %}>TIDAK LAYAK</option>
+                </select>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    Filter
+                </button>
+            </form>
+            <a href="{% url 'export_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                <i class="fas fa-download mr-2"></i>Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="text-sm text-gray-500 mb-4">Temperature & Humidity History</div>
+            <canvas id="tempHumChart"></canvas>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="text-sm text-gray-500 mb-4">Gas Sensors History</div>
+            <canvas id="gasChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="text-sm text-gray-500 p-4 flex justify-between items-center">
+            <span>Total Records: {{ total_records }}</span>
+            <div class="loading-indicator flex items-center" style="display: none;">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                <span>Loading data...</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto relative">
+            <!-- Loading overlay -->
+            <div class="loading-overlay absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center" style="display: none;">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temperature</th>
+                
+                {% if not data %}
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-database text-4xl mb-2"></i>
+                                <p>No sensor data found{% if date_filter or status_filter %} matching your filters{% endif %}</p>
+                                {% if date_filter or status_filter %}
+                                <a href="{% url 'data_history' %}" class="text-blue-600 hover:text-blue-800 mt-2">
+                                    <i class="fas fa-times mr-1"></i>Clear filters
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                {% endif %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Humidity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MQ2</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MQ3</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MQ135</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for row in history %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if data_source == 'InfluxDB' %}
+                            {{ row.timestamp|date:"Y-m-d H:i:s" }}
+                            {% else %}
+                            {{ row.timestamp|date:"Y-m-d H:i:s" }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.temperature|default_if_none:"-"|floatformat:1 }}°C
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.humidity|default_if_none:"-"|floatformat:1 }}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.mq2|default_if_none:"-"|floatformat:1 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.mq3|default_if_none:"-"|floatformat:1 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ row.mq135|default_if_none:"-"|floatformat:1 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if row.status == 'LAYAK' %}bg-green-100 text-green-800
+                                {% elif row.status == 'TIDAK LAYAK' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ row.status|default:"Unknown" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            No data available for the selected filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Realtime update untuk tabel dan chart - DEFINISI GLOBAL
+let realtimeHistoryBuffer = [];
+
+function fetchRealtimeHistory() {
+    console.log('Fetching realtime history from API...');
+    // Tampilkan loading indicator
+    const loadingIndicator = document.querySelector('.loading-indicator');
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    
+    fetch('/api/sensor/history/')
+        .then(response => {
+            console.log('API Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Received data:', data);
+            // Update buffer dengan data terbaru
+            realtimeHistoryBuffer = data;
+            updateHistoryTable();
+            updateCharts();
+            
+            // Sembunyikan loading indicator
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error fetching realtime history:', error);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+        });
+}
+
+function updateHistoryTable() {
+    const tbody = document.querySelector('tbody.bg-white');
+    if (!tbody || realtimeHistoryBuffer.length === 0) return;
+    
+    tbody.innerHTML = '';
+    
+    realtimeHistoryBuffer.forEach(function(row) {
+        const tr = document.createElement('tr');
+        const suhu = row.suhu !== undefined ? row.suhu : (row.temperature !== undefined ? row.temperature : 0);
+        const kelembapan = row.kelembapan !== undefined ? row.kelembapan : (row.humidity !== undefined ? row.humidity : 0);
+        const mq2 = row.mq2 !== undefined ? row.mq2 : 0;
+        const mq3 = row.mq3 !== undefined ? row.mq3 : 0;
+        const mq135 = row.mq135 !== undefined ? row.mq135 : 0;
+        const status = row.status || 'UNKNOWN';
+        
+        // Determine status color
+        let statusClass = 'text-gray-600';
+        if (status.toUpperCase().includes('LAYAK') && !status.toUpperCase().includes('TIDAK')) {
+            statusClass = 'text-green-600 font-medium';
+        } else if (status.toUpperCase().includes('PERINGATAN')) {
+            statusClass = 'text-yellow-600 font-medium';
+        } else if (status.toUpperCase().includes('TIDAK')) {
+            statusClass = 'text-red-600 font-medium';
+        }
+        
+        tr.innerHTML = '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' + row.timestamp + '</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (Math.round(suhu * 10) / 10).toFixed(1) + '°C</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (Math.round(kelembapan * 10) / 10).toFixed(1) + '%</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (Math.round(mq2 * 10) / 10).toFixed(1) + '</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (Math.round(mq3 * 10) / 10).toFixed(1) + '</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (Math.round(mq135 * 10) / 10).toFixed(1) + '</td>' +
+            '<td class="px-6 py-4 whitespace-nowrap text-sm ' + statusClass + '">' + status + '</td>';
+        tbody.appendChild(tr);
+    });
+    
+    // Update total records count
+    const totalRecordsEl = document.querySelector('.text-sm.text-gray-500.p-4 span');
+    if (totalRecordsEl) {
+        totalRecordsEl.textContent = 'Total Records: ' + realtimeHistoryBuffer.length + ' (Realtime)';
+    }
+}
+
+function updateCharts() {
+    if (realtimeHistoryBuffer.length === 0) return;
+    
+    // Extract data for charts (reverse untuk urutan chronological)
+    const reversedData = realtimeHistoryBuffer.slice().reverse();
+    const labels = reversedData.map(function(row) { return row.timestamp; });
+    const tempData = reversedData.map(function(row) { return row.suhu !== undefined ? row.suhu : (row.temperature !== undefined ? row.temperature : 0); });
+    const humData = reversedData.map(function(row) { return row.kelembapan !== undefined ? row.kelembapan : (row.humidity !== undefined ? row.humidity : 0); });
+    const mq2Data = reversedData.map(function(row) { return row.mq2 !== undefined ? row.mq2 : 0; });
+    const mq3Data = reversedData.map(function(row) { return row.mq3 !== undefined ? row.mq3 : 0; });
+    const mq135Data = reversedData.map(function(row) { return row.mq135 !== undefined ? row.mq135 : 0; });
+    
+    // Update charts if they exist
+    if (window.tempHumChart) {
+        window.tempHumChart.data.labels = labels;
+        window.tempHumChart.data.datasets[0].data = tempData;
+        window.tempHumChart.data.datasets[1].data = humData;
+        window.tempHumChart.update('none');
+    }
+    
+    if (window.gasChart) {
+        window.gasChart.data.labels = labels;
+        window.gasChart.data.datasets[0].data = mq2Data;
+        window.gasChart.data.datasets[1].data = mq3Data;
+        window.gasChart.data.datasets[2].data = mq135Data;
+        window.gasChart.update('none');
+    }
+}
+
+// Initialize charts with the provided data
+document.addEventListener('DOMContentLoaded', function() {
+    var labels = {{ labels_js|safe }};
+    var tempData = {{ temp_js|safe }};
+    var humData = {{ hum_js|safe }};
+    var mq2Data = {{ mq2_js|safe }};
+    var mq3Data = {{ mq3_js|safe }};
+    var mq135Data = {{ mq135_js|safe }};
+
+    // Temperature & Humidity Chart (simpan ke window agar bisa diupdate)
+    window.tempHumChart = new Chart(document.getElementById('tempHumChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Temperature (°C)',
+                data: tempData,
+                borderColor: '#ef4444',
+                tension: 0.1
+            }, {
+                label: 'Humidity (%)',
+                data: humData,
+                borderColor: '#3b82f6',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Temperature & Humidity Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                }
+            }
+        }
+    });
+
+    // Gas Sensors Chart (simpan ke window agar bisa diupdate)
+    window.gasChart = new Chart(document.getElementById('gasChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'MQ2 (ppm)',
+                data: mq2Data,
+                borderColor: '#10b981',
+                tension: 0.1
+            }, {
+                label: 'MQ3 (ppm)',
+                data: mq3Data,
+                borderColor: '#8b5cf6',
+                tension: 0.1
+            }, {
+                label: 'MQ135 (ppm)',
+                data: mq135Data,
+                borderColor: '#f59e0b',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Gas Sensor Readings Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                }
+            }
+        }
+    });
+    
+    // Langsung jalankan realtime fetch setelah chart di-init
+    console.log('Initializing realtime history updates...');
+    setTimeout(function() {
+        console.log('Starting realtime fetch...');
+        fetchRealtimeHistory(); // Initial fetch
+    setInterval(fetchRealtimeHistory, 300000); // Update every 5 minutes
+    }, 500); // Delay 500ms untuk memastikan DOM ready
+});
+</script>
+{% endblock %}

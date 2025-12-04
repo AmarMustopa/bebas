@@ -1,0 +1,13 @@
+Deteksi Risiko Pembusukan Daging Ayam Segar Menggunakan Sensor DHT22 dan Model Kecerdasan Buatan Berbasis Arduino Uno
+
+Rumusan Masalah
+
+1. Bagaimana memanfaatkan sensor DHT22 untuk memantau suhu dan kelembapan lingkungan penyimpanan daging ayam segar?
+2. Bagaimana merancang model kecerdasan buatan sederhana untuk memprediksi tingkat risiko pembusukan daging ayam?
+3. Bagaimana menampilkan hasil monitoring dan prediksi ke dalam web dashboard serta mobile application secara real-time?
+
+Tujuan
+
+1. Merancang sistem monitoring penyimpanan daging ayam segar menggunakan sensor DHT22.
+2. Mengembangkan model AI sederhana untuk memprediksi risiko pembusukan daging berdasarkan suhu dan kelembapan.
+3. Mengintegrasikan sistem sensor, Arduino Uno, web dashboard, dan mobile application untuk memberikan notifikasi dan rekomendasi kepada pengguna.

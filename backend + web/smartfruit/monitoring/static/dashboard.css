@@ -1,0 +1,37 @@
+/* Animasi untuk tabel riwayat */
+.fade-in {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Animasi untuk status */
+.status {
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+/* Warna status */
+.status-fresh {
+    background-color: #4ade80;
+    color: #064e3b;
+}
+
+.status-warning {
+    background-color: #fcd34d;
+    color: #92400e;
+}
+
+.status-spoiled {
+    background-color: #f87171;
+    color: #7f1d1d;
+}
+
+/* Card styles dengan hover effect */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

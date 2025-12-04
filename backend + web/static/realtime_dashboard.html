@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Dashboard</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .kpi {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .kpi div {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: #e0e7ff;
+            margin: 0 10px;
+        }
+        /* Status color classes */
+        .status {
+            font-weight: 600;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .status-layak {
+            background: #28a745; /* green */
+        }
+        .status-warning {
+            background: #ffc107; /* yellow */
+            color: #212529;
+        }
+        .status-tidak {
+            background: #dc3545; /* red */
+        }
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-Time Sensor Dashboard</h1>
+        <div class="kpi">
+            <div id="temperature">Temperature: -</div>
+            <div id="humidity">Humidity: -</div>
+            <div id="gas">Gas: -</div>
+            <div id="status" class="status status-warning">Status: -</div>
+        </div>
+        <canvas id="chart" width="400" height="200"></canvas>
+        <!-- Debug / test buttons (can be removed in production) -->
+        <div style="text-align:center; margin-top:12px;">
+            <button id="testLayak">Test Layak</button>
+            <button id="testWarning">Test Warning</button>
+            <button id="testTidak">Test Tidak Layak</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:5000');
+
+        // Elements
+        const temperatureEl = document.getElementById('temperature');
+        const humidityEl = document.getElementById('humidity');
+        const gasEl = document.getElementById('gas');
+        const statusEl = document.getElementById('status');
+
+        // Helper to set status text + class
+        function setStatus(statusText) {
+            const text = statusText || '-';
+            statusEl.textContent = `Status: ${text}`;
+
+            const statusValue = (text || '').toString().toUpperCase();
+            statusEl.classList.remove('status-layak', 'status-warning', 'status-tidak');
+            if (statusValue.includes('TIDAK')) {
+                statusEl.classList.add('status-tidak');
+            } else if (statusValue.includes('LAYAK')) {
+                statusEl.classList.add('status-layak');
+            } else {
+                statusEl.classList.add('status-warning');
+            }
+        }
+
+        // Chart.js setup
+        const ctx = document.getElementById('chart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                    },
+                    {
+                        label: 'Humidity (%)',
+                        data: [],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: true,
+                    },
+                    {
+                        label: 'Gas (ppm)',
+                        data: [],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time',
+                        },
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Values',
+                        },
+                    },
+                },
+            },
+        });
+
+        // Listen for updates
+        socket.on('update_data', (data) => {
+            console.log('Received data:', data);
+
+            // Update KPI elements
+            temperatureEl.textContent = `Temperature: ${data.temperature || '-'}`;
+            humidityEl.textContent = `Humidity: ${data.humidity || '-'}`;
+            gasEl.textContent = `Gas: ${data.gas || '-'}`;
+            // Update status text and color
+            setStatus(data.status);
+
+            // Update chart
+            const now = new Date().toLocaleTimeString();
+            chart.data.labels.push(now);
+            chart.data.datasets[0].data.push(data.temperature || 0);
+            chart.data.datasets[1].data.push(data.humidity || 0);
+            chart.data.datasets[2].data.push(data.gas || 0);
+
+            // Keep only the last 10 data points
+            if (chart.data.labels.length > 10) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach((dataset) => dataset.data.shift());
+            }
+
+            chart.update();
+        });
+
+        // Test buttons (local simulation)
+        document.getElementById('testLayak').addEventListener('click', () => setStatus('LAYAK'));
+        document.getElementById('testWarning').addEventListener('click', () => setStatus('Peringatan'));
+        document.getElementById('testTidak').addEventListener('click', () => setStatus('TIDAK LAYAK'));
+    </script>
+</body>
+</html>

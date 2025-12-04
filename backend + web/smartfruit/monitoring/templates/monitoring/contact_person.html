@@ -1,0 +1,228 @@
+{% extends 'monitoring/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Page-specific styles for Contact layout */
+    .contact-page-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 0;
+    }
+    .contact-card-large {
+        width: 900px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        display: flex;
+        background: #fff;
+    }
+    .contact-left {
+        background: #0598a6; /* teal */
+        color: white;
+        width: 45%;
+        padding: 20px 36px 28px 36px; /* bring title closer to top */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .contact-left h2 {
+        font-size: 2.25rem;
+        margin: 6px 0 18px 0;
+        font-weight: 700;
+    }
+    .about-box {
+        width: 70%;
+        height: 360px; /* taller portrait-style box */
+        background: rgba(255,255,255,0.06);
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .contact-right {
+        width: 55%;
+        padding: 36px 44px;
+        background: #ffffff;
+    }
+    .contact-right h2 {
+        font-size: 2rem;
+        margin-bottom: 18px;
+        color: #111827;
+        font-weight: 800;
+    }
+    .contact-form .field {
+        margin-bottom: 14px;
+    }
+    .contact-form input, .contact-form textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+        font-size: 0.95rem;
+        color: #111827;
+    }
+    .contact-form textarea { height: 92px; resize: vertical; }
+    .contact-submit {
+        display: block;
+        margin: 18px auto 0 auto;
+        background: #08a5b3;
+        color: #fff;
+        padding: 12px 36px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+    }
+    @media (max-width: 980px) {
+        .contact-card-large { width: 95%; flex-direction: column; }
+        .contact-left, .contact-right { width: 100%; }
+        .contact-left { padding: 28px; }
+        .contact-right { padding: 28px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page-wrapper">
+    <div class="contact-card-large">
+        <div class="contact-left">
+            <h2>Tentang Kami</h2>
+            <div class="about-box">
+                <img src="{% static 'img/contact_team.jpg' %}" alt="Team" style="height:100%;width:auto;max-width:100%;object-fit:cover;object-position:center top;display:block;"/>
+            </div>
+        </div>
+
+        <div class="contact-right">
+            <h2>Hubungi Kami</h2>
+            <form class="contact-form" action="{% url 'contact_person' %}" method="post">
+                {% csrf_token %}
+                <div class="field"><input type="text" name="name" placeholder="Nama" /></div>
+                <div class="field"><input type="email" name="email" placeholder="Alamat Email" /></div>
+                <div class="field"><input type="text" name="company" placeholder="Perusahaan" /></div>
+                <div class="field">
+                    <label for="phone_select" class="sr-only">Pilih nomor</label>
+                    <select id="phone_select" name="phone" style="width:100%;padding:12px;border-radius:6px;border:1px solid #e5e7eb;background:#f8fafc;font-size:0.95rem;color:#111827;">
+                        <option value="085380090824">085380090824</option>
+                        <option value="895605932377">895605932377</option>
+                        <option value="other">Lainnya (masukkan manual)</option>
+                    </select>
+                    <div id="phone_other_wrapper" style="margin-top:8px;display:none;">
+                        <input type="text" id="phone_other" name="phone_other" placeholder="Masukkan nomor telepon" style="width:100%;padding:12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;font-size:0.95rem;color:#111827;" />
+                    </div>
+                </div>
+                <div class="field"><textarea name="message" placeholder="Pesan"></textarea></div>
+                <button type="submit" class="contact-submit">KIRIM</button>
+                <p style="text-align:center;margin-top:12px;">
+                    <a class="wa-button" href="https://wa.me/6282181556733" target="_blank" rel="noopener noreferrer">Chat via WhatsApp</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+// Helper to get cookie value (for CSRF)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    const form = document.querySelector('.contact-form');
+    if (!form) return;
+    // Toggle other phone input when select changes
+    const phoneSelect = document.getElementById('phone_select');
+    const phoneOtherWrapper = document.getElementById('phone_other_wrapper');
+    const phoneOtherInput = document.getElementById('phone_other');
+    if (phoneSelect) {
+        phoneSelect.addEventListener('change', function(){
+            if (this.value === 'other') {
+                phoneOtherWrapper.style.display = 'block';
+                phoneOtherInput.focus();
+            } else {
+                phoneOtherWrapper.style.display = 'none';
+            }
+        });
+    }
+
+    function normalizePhoneForWa(s) {
+        if (!s) return '';
+        // remove spaces, plus, non-digit
+        let num = ('' + s).replace(/[^0-9]/g, '');
+        if (num.startsWith('0')) {
+            return '62' + num.substring(1);
+        }
+        if (num.startsWith('8')) {
+            return '62' + num;
+        }
+        // assume already international (62...)
+        return num;
+    }
+
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const data = new FormData(form);
+
+        // Determine chosen phone (select or other)
+        let chosen = data.get('phone') || '';
+        if (chosen === 'other') {
+            chosen = (data.get('phone_other') || '').trim();
+        }
+        // ensure FormData 'phone' contains the final string (for backend)
+        data.set('phone', chosen);
+
+        // Build text for WhatsApp (show the chosen phone as typed)
+        const name = data.get('name') || '';
+        const email = data.get('email') || '';
+        const company = data.get('company') || '';
+        const phone = chosen || '';
+        const message = data.get('message') || '';
+        const text = `Nama: ${name}\nEmail: ${email}\nPerusahaan: ${company}\nTel: ${phone}\nPesan: ${message}`;
+
+        // Normalize phone for wa.me URL
+        const waNumber = normalizePhoneForWa(phone) || '6282181556733';
+
+        // Submit via AJAX to save on server
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: data
+        }).then(resp => {
+            if (!resp.ok) throw new Error('Network error');
+            return resp.json();
+        }).then(json => {
+            // On success, open WhatsApp in new tab with encoded text
+            if (json.status === 'ok') {
+                const waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(text);
+                window.open(waUrl, '_blank');
+                // optional: show a simple success message
+                alert('Pesan tersimpan dan WhatsApp dibuka.');
+                form.reset();
+            } else {
+                alert('Terjadi kesalahan saat mengirim pesan.');
+            }
+        }).catch(err => {
+            console.error('Contact form submit error', err);
+            alert('Gagal mengirim pesan (cek koneksi).');
+        });
+    });
+});
+</script>
+{% endblock %}

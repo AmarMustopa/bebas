@@ -1,0 +1,246 @@
+{% extends 'monitoring/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .gauge-chart {
+        position: relative;
+        height: 200px;
+    }
+    
+    /* Status colors and cards */
+    .status-layak { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-tidak { color: #ef4444; }
+    
+    .status-card.normal { border-left: 4px solid #10b981; }
+    .status-card.warning { border-left: 4px solid #f59e0b; }
+    .status-card.danger { border-left: 4px solid #ef4444; }
+    
+    /* Animasi kedip-kedip untuk status TIDAK LAYAK */
+    @keyframes blink-danger {
+        0%, 100% { 
+            border-left-color: #ef4444;
+            background-color: #ffffff;
+        }
+        50% { 
+            border-left-color: #dc2626;
+            background-color: #fee2e2;
+        }
+    }
+    
+    .status-card.danger.blink {
+        animation: blink-danger 1s ease-in-out infinite;
+    }
+    
+    @keyframes blink-text {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    
+    .blink-text {
+        animation: blink-text 1s ease-in-out infinite;
+    }
+    
+    /* Grafik bundar kelayakan daging */
+    .meat-quality-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    #meatQualityChart {
+        max-width: 250px !important;
+        max-height: 250px !important;
+        width: 250px !important;
+        height: 250px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Status Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- MQ2 Gas Sensor Card -->
+    <div class="status-card" id="mq2-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">MQ2 - Gas Umum</div>
+                <div class="text-3xl font-bold text-blue-600" id="mq2-value">0 ppm</div>
+                <div class="mt-2">
+                    <span class="status-layak text-sm font-medium" id="mq2-status">Normal</span>
+                </div>
+            </div>
+            <div class="text-blue-200">
+                <i class="fas fa-wind text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'sensor_detail' 'mq2' %}" class="text-sm text-blue-600 hover:underline mt-4 inline-block">
+            Lihat Detail <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- MQ3 Sensor Card -->
+    <div class="status-card" id="mq3-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">MQ3 - Alkohol/VOC</div>
+                <div class="text-3xl font-bold text-purple-600" id="mq3-value">0 ppm</div>
+                <div class="mt-2">
+                    <span class="status-layak text-sm font-medium" id="mq3-status">Normal</span>
+                </div>
+            </div>
+            <div class="text-purple-200">
+                <i class="fas fa-flask text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'sensor_detail' 'mq3' %}" class="text-sm text-blue-600 hover:underline mt-4 inline-block">
+            Lihat Detail <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- MQ135 Sensor Card -->
+    <div class="status-card" id="mq135-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">MQ135 - Amonia/CO₂</div>
+                <div class="text-3xl font-bold text-green-600" id="mq135-value">0 ppm</div>
+                <div class="mt-2">
+                    <span class="status-layak text-sm font-medium" id="mq135-status">Normal</span>
+                </div>
+            </div>
+            <div class="text-green-200">
+                <i class="fas fa-cloud text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'sensor_detail' 'mq135' %}" class="text-sm text-blue-600 hover:underline mt-4 inline-block">
+            Lihat Detail <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- Temperature Sensor Card -->
+    <div class="status-card" id="temperature-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">🌡️ Temperature</div>
+                <div class="text-3xl font-bold text-red-600" id="temperature-value">0 °C</div>
+                <div class="mt-2">
+                    <span class="status-layak text-sm font-medium" id="temperature-status">Normal</span>
+                </div>
+            </div>
+            <div class="text-red-200">
+                <i class="fas fa-thermometer-half text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'sensor_detail' 'temperature' %}" class="text-sm text-blue-600 hover:underline mt-4 inline-block">
+            Lihat Detail <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- Humidity Sensor Card -->
+    <div class="status-card" id="humidity-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">💧 Humidity</div>
+                <div class="text-3xl font-bold text-blue-600" id="humidity-value">0 %</div>
+                <div class="mt-2">
+                    <span class="status-layak text-sm font-medium" id="humidity-status">Normal</span>
+                </div>
+            </div>
+            <div class="text-blue-200">
+                <i class="fas fa-tint text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'sensor_detail' 'humidity' %}" class="text-sm text-blue-600 hover:underline mt-4 inline-block">
+            Lihat Detail <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- Status Summary Card -->
+    <div class="status-card normal" id="status-card">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="text-sm text-gray-500">Overall Status</div>
+                <div class="text-3xl font-bold text-green-600" id="status-value">LAYAK</div>
+                <div class="mt-2">
+                    <span class="text-sm text-gray-500">Last update: <span id="last-update">Just now</span></span>
+                </div>
+            </div>
+            <div class="text-gray-200">
+                <i class="fas fa-check-circle text-4xl"></i>
+            </div>
+        </div>
+        <a href="{% url 'data_history' %}" class="text-sm text-blue-600 hover:text-blue-800 mt-4 inline-block">
+            View History <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+        <!-- AI Agent Analysis Section -->
+        <div class="mt-4 p-4 rounded bg-gray-50 border border-gray-200" id="ai-agent-section">
+            <div class="font-semibold text-gray-700 mb-2"><i class="fas fa-robot mr-2"></i>AI Agent Analysis</div>
+            <div id="ai-agent-status" class="mb-1 text-sm"></div>
+            <div id="ai-agent-explanation" class="mb-1 text-xs text-gray-600"></div>
+            <div id="ai-agent-thresholds" class="mb-1 text-xs text-gray-500"></div>
+            <div id="ai-agent-sensor-status" class="mb-1 text-xs text-gray-500"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Section -->
+<div class="status-card mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Sensor Readings</h2>
+        <div class="realtime-indicator">
+            <div class="realtime-dot"></div>
+            <span>Realtime</span>
+        </div>
+    </div>
+    <canvas id="sensorChart" class="chart-container"></canvas>
+    <!-- Grafik Bundar Status Kelayakan Daging Realtime -->
+    <div class="meat-quality-container">
+        <h2 class="text-lg font-semibold mb-4">Status Kelayakan Daging (Realtime)</h2>
+        <canvas id="meatQualityChart"></canvas>
+    </div>
+</div>
+
+<!-- Recent Data Table -->
+<div class="status-card">
+    
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Recent Data</h2>
+        <a href="{% url 'data_history' %}" class="text-sm text-blue-600 hover:text-blue-800">
+            View All <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MQ2</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MQ3</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MQ135</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Suhu</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kelembapan</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody id="history-table" class="bg-white divide-y divide-gray-200">
+                <!-- Data will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard_v2.js' %}?v=26"></script>
+<script>
+    // Initialize dashboard on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Dashboard loaded, initializing realtime updates (2 seconds interval)...');
+        fetchDashboardData();
+    });
+</script>
+{% endblock %}
