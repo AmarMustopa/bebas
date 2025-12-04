@@ -11,14 +11,13 @@ load_dotenv()
 
 # --- Konfigurasi InfluxDB Anda ---
 # Nilai-nilai ini diambil dari environment variable atau menggunakan default Anda
-url = os.environ.get('INFLUX_URL', 'http://103.151.63.80:8034')
+url = os.environ.get('INFLUX_URL', 'http://127.0.0.1:8034')
 token = os.environ.get('INFLUX_TOKEN', 'Wv4fUOXPpqTi7FFQDVskdQjrLVEaweO0wh00QYNKOdM1_wpQArozJdxz7esh7j-B0V24P3CcSa-aXogVSco9Yg==')
 org = os.environ.get('INFLUX_ORG', 'polinela')
 bucket = os.environ.get('INFLUX_BUCKET', 'datamonitoring')
 
-# Measurement name ini tidak digunakan lagi di query (dihapus untuk fleksibilitas), 
-# tetapi tetap dipertahankan jika Anda ingin menggunakannya di masa depan.
-MEASUREMENT = 'sensordata' 
+# Measurement name - HARUS SESUAI dengan data di InfluxDB
+MEASUREMENT = 'monitoring'
 
 
 def test_connection():
@@ -38,20 +37,18 @@ def test_connection():
 
 
 def get_latest_data():
-    """Get latest sensor data from InfluxDB"""
+    """Get latest sensor data from InfluxDB - OPTIMIZED"""
     try:
         from influxdb_client import InfluxDBClient
-        with InfluxDBClient(url=url, token=token, org=org, timeout=10000) as client:
+        with InfluxDBClient(url=url, token=token, org=org, timeout=30000) as client:
             query_api = client.query_api()
             
-            # KOREKSI FINAL: Filter _measurement Dihapus! Mengandalkan 'last()' saja.
+            # Query SEDERHANA - ambil data 5 menit terakhir, tanpa pivot
             query = f'''
                 from(bucket: "{bucket}")
-                |> range(start: -24h)
+                |> range(start: -5m)
                 |> filter(fn: (r) => r["_measurement"] == "monitoring")
-                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-                |> sort(columns: ["_time"], desc: true)
-                |> limit(n:1)
+                |> last()
             '''
             tables = query_api.query(query, org=org)
             out = {
@@ -63,25 +60,32 @@ def get_latest_data():
                 'status': None,
                 'skorTotal': 0.0
             }
-            # Ambil satu record pivot (semua field pada timestamp terbaru)
+            
+            # Ambil nilai dari setiap field
             for table in tables:
                 for record in table.records:
-                    values = record.values if hasattr(record, 'values') else {}
-                    out['suhu'] = float(values.get('suhu', 0.0))
-                    out['kelembapan'] = float(values.get('kelembapan', 0.0))
-                    out['mq2'] = float(values.get('mq2', 0.0))
-                    out['mq3'] = float(values.get('mq3', 0.0))
-                    out['mq135'] = float(values.get('mq135', 0.0))
-                    out['status'] = int(values.get('status', 0)) if values.get('status') is not None else None
-                    out['skorTotal'] = float(values.get('skorTotal', 0.0))
-                    break # hanya ambil satu record (terbaru)
+                    field = record.get_field().lower()
+                    value = record.get_value()
+                    if field == 'suhu':
+                        out['suhu'] = float(value) if value else 0.0
+                    elif field == 'kelembapan':
+                        out['kelembapan'] = float(value) if value else 0.0
+                    elif field == 'mq2':
+                        out['mq2'] = float(value) if value else 0.0
+                    elif field == 'mq3':
+                        out['mq3'] = float(value) if value else 0.0
+                    elif field == 'mq135':
+                        out['mq135'] = float(value) if value else 0.0
+                    elif field == 'status':
+                        out['status'] = int(value) if value is not None else None
+                    elif field == 'skortotal':
+                        out['skorTotal'] = float(value) if value else 0.0
+                        
             print(f"DEBUG InfluxDB get_latest_data: {out}")
             return out
     except Exception as e:
-        # Kembalikan data 0.0 dan pesan error jika ada masalah koneksi/query
         print(f"Error fetching data: {e}")
         return {'suhu': 0.0, 'kelembapan': 0.0, 'mq2': 0.0, 'mq3': 0.0, 'mq135': 0.0, "error": str(e)}
-
 
 def get_history_data(limit=50):
     """Get historical sensor data from InfluxDB (last N records)"""
@@ -92,10 +96,11 @@ def get_history_data(limit=50):
         with InfluxDBClient(url=url, token=token, org=org, timeout=10000) as client:
             query_api = client.query_api()
             
-            # Query untuk mengambil data history terakhir
+            # Query untuk mengambil data history dengan measurement monitoring
             query = f'''
                 from(bucket:"{bucket}")
                 |> range(start: -24h)
+                |> filter(fn: (r) => r["_measurement"] == "monitoring")
                 |> sort(columns:["_time"], desc: true)
                 |> limit(n:{limit})
             '''
