@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class LiveLogWidget extends StatefulWidget {
   final List<Map<String, dynamic>> logs;
 
-  const LiveLogWidget({
-    Key? key,
-    required this.logs,
-  }) : super(key: key);
+  const LiveLogWidget({Key? key, required this.logs}) : super(key: key);
 
   @override
   State<LiveLogWidget> createState() => _LiveLogWidgetState();
@@ -90,133 +87,127 @@ class _LiveLogWidgetState extends State<LiveLogWidget> {
           ),
           // Log entries
           Expanded(
-            child: widget.logs.isEmpty
-                ? Center(
-                    child: Text(
-                      'Menunggu data MQTT...',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                        fontFamily: 'Courier',
+            child:
+                widget.logs.isEmpty
+                    ? Center(
+                      child: Text(
+                        'Menunggu data MQTT...',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                          fontFamily: 'Courier',
+                        ),
                       ),
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(12),
-                    itemCount: widget.logs.length,
-                    itemBuilder: (context, index) {
-                      final log = widget.logs[index];
-                      final suhu = (log['suhu'] ?? 0.0).toStringAsFixed(1);
-                      final kelembapan = (log['kelembapan'] ?? 0.0).toStringAsFixed(1);
-                      final mq2 = log['mq2'] ?? 0;
-                      final mq3 = log['mq3'] ?? 0;
-                      final mq135 = log['mq135'] ?? 0;
-                      final status = (log['status'] ?? 'TIDAK LAYAK').toString();
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(12),
+                      itemCount: widget.logs.length,
+                      itemBuilder: (context, index) {
+                        final log = widget.logs[index];
+                        final suhu = (log['suhu'] ?? 0.0).toStringAsFixed(1);
+                        final kelembapan = (log['kelembapan'] ?? 0.0)
+                            .toStringAsFixed(1);
+                        final mq2 = log['mq2'] ?? 0;
+                        final mq3 = log['mq3'] ?? 0;
+                        final mq135 = log['mq135'] ?? 0;
+                        final status =
+                            (log['status'] ?? 'TIDAK_LAYAK').toString();
 
-                      final isLayak = status.toUpperCase() == 'LAYAK';
-                      final borderColor = isLayak ? Colors.green : Colors.red;
+                        // Perbaiki logic: cek TIDAK dulu sebelum LAYAK
+                        final statusUpper = status.toUpperCase();
+                        final isLayak =
+                            statusUpper.contains('LAYAK') &&
+                            !statusUpper.contains('TIDAK');
+                        final borderColor = isLayak ? Colors.green : Colors.red;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade900,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: borderColor.withOpacity(0.5),
-                              width: 1,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade900,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: borderColor.withOpacity(0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header line
+                                Text(
+                                  '✅ Data diterima dari MQTT:',
+                                  style: TextStyle(
+                                    color: Colors.green.shade300,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Courier',
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                // Data dengan format yang rapi
+                                Text(
+                                  '   Suhu: ${suhu}°C',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                Text(
+                                  '   Kelembapan: ${kelembapan}%',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                Text(
+                                  '   MQ2: $mq2 ppm',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                Text(
+                                  '   MQ3: $mq3 ppm',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                Text(
+                                  '   MQ135: $mq135 ppm',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade200,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                // Status
+                                Text(
+                                  '   Status: $status',
+                                  style: TextStyle(
+                                    color:
+                                        isLayak
+                                            ? Colors.green.shade300
+                                            : Colors.red.shade300,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Courier',
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Header line
-                              Text(
-                                '✅ Data diterima dari MQTT:',
-                                style: TextStyle(
-                                  color: Colors.green.shade300,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Courier',
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // Data dengan format yang rapi
-                              Text(
-                                '   Suhu: ${suhu}°C',
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                              Text(
-                                '   Kelembapan: ${kelembapan}%',
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                              Text(
-                                '   MQ2: $mq2 ppm',
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                              Text(
-                                '   MQ3: $mq3 ppm',
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                              Text(
-                                '   MQ135: $mq135 ppm',
-                                style: TextStyle(
-                                  color: Colors.amber.shade200,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // Status
-                              Text(
-                                '   Status: $status',
-                                style: TextStyle(
-                                  color: isLayak
-                                      ? Colors.green.shade300
-                                      : Colors.red.shade300,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Courier',
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
